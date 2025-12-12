@@ -262,9 +262,17 @@ class GUI_MAIN(QtWidgets.QDialog):
 
     def on_button_cleandb(self):
         try:
+            if hasattr(self.cache, 'close'):
+                self.cache.close()
             os.remove(self.cache.db_path)
             if self.cache.CONFIG['verbose']:
                 print("[AutoResolv] Cleaned DB Cache successful")
+        except FileNotFoundError:
+            if self.cache.CONFIG['verbose']:
+                print("[AutoResolv] DB Cache file not found, assuming already cleaned")
+        except PermissionError as e:
+            if self.cache.CONFIG['verbose']:
+                print(f"[AutoResolv] Failed to clean DB Cache: {str(e)}")
         except Exception as e:
             if self.cache.CONFIG['verbose']:
                 print(f"[AutoResolv] Failed to clean DB Cache: {str(e)}")

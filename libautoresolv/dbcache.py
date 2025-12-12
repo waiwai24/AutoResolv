@@ -56,6 +56,13 @@ class DB_CACHE_MANAGER():
         else:
             return False
 
+    def close(self):
+        if hasattr(self, 'cur') and self.cur:
+            self.cur.close()
+        if hasattr(self, 'con') and self.con:
+            self.con.close()
+
+
     def parse_signature(self):
         sigs = {}
         cmd = self.cur.execute("SELECT * from signature")
