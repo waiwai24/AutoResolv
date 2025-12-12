@@ -59,7 +59,7 @@ Windows (Not fully tested, Bugs can occur)
 ```cmd
 python.exe -m pip install pyqt5 pyelftools
 ```
-then copy AutoResolv.py and libautoresolv in ```C:\Users\[USER]\AppData\Roaming\Hex-Rays\plugins\```
+then copy AutoResolv.py and libautoresolv in ```C:\Users\[USER]\AppData\Roaming\Hex-Rays\plugins\```, and fill in the ida_path configuration in /libautoresolv/resultshower.py,  you can open library in a new ida in resultshower.
 
 
 # Usage 
