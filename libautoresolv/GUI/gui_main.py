@@ -261,10 +261,13 @@ class GUI_MAIN(QtWidgets.QDialog):
 
 
     def on_button_cleandb(self):
-        
-        os.remove(self.cache.db_path) 
-        if self.cache.CONFIG['verbose']:
-            print("[AutoResolv] Cleaned DB Cache sucessfull")
+        try:
+            os.remove(self.cache.db_path)
+            if self.cache.CONFIG['verbose']:
+                print("[AutoResolv] Cleaned DB Cache successful")
+        except Exception as e:
+            if self.cache.CONFIG['verbose']:
+                print(f"[AutoResolv] Failed to clean DB Cache: {str(e)}")
 
         self.close()
         
@@ -328,17 +331,17 @@ class GUI_MAIN(QtWidgets.QDialog):
 
 
     def on_button_resolv(self):
+        try:
+            if self.cache.is_cached_data:
+                values = self.cache.cached_data
+                if self.cache.CONFIG['verbose']:
+                    print("[AutoResolv] Data found in DB Cache, not resolving again")
 
-        if self.cache.is_cached_data:
-            values = self.cache.cached_data
-            if self.cache.CONFIG['verbose']:
-                print("[AutoResolv] Data found in DB Cache, not resolving again")
+                rs = ResultShower("Result", values, self.cache.CONFIG['demangle'])
+                r = rs.show()
+                self.close()
+                return
 
-            rs = ResultShower("Result", values, self.cache.CONFIG['demangle'])
-            r = rs.show()
-            self.close()
-
-        else:
             if self.cache.CONFIG['verbose']:
                 print("[AutoResolv] Looking for extern functions in .PLT | .PLT-SEC segment")                            
             start,end = get_seg(".plt")
@@ -361,8 +364,20 @@ class GUI_MAIN(QtWidgets.QDialog):
             if self.cache.CONFIG['verbose']:
                 print(f"[AutoResolv] Got {len(funs_binary)} functions")      
 
+            total_libs = len(self.cache.libsinfo)
+            self.progress = QProgressDialog("Parsing libraries...", "Cancel", 0, total_libs, self)
+            self.progress.setWindowModality(Qt.WindowModal)
+            self.progress.setAutoClose(True)
+            self.progress.show()
+
             self.libsfun = {}
-            for lib in self.cache.libsinfo:
+            for i, lib in enumerate(self.cache.libsinfo):
+                self.progress.setValue(i)
+                self.progress.setLabelText(f"Parsing library: {lib} ({i+1}/{total_libs})")
+                if self.progress.wasCanceled():
+                    self.progress.close()
+                    return
+
                 funs = getAllFunsFromLib(self.cache.libsinfo[lib], self.cache.CONFIG['libc'])
             
                 if funs is None:
@@ -373,6 +388,12 @@ class GUI_MAIN(QtWidgets.QDialog):
                     if self.cache.CONFIG['verbose']:
                         print(f"[AutoResolv] Parsed {lib}")
                     self.libsfun[lib] = funs
+                
+                if (i + 1) % 5 == 0:
+                    QCoreApplication.processEvents()
+
+            self.progress.setValue(total_libs)
+            self.progress.close()
 
             if self.cache.CONFIG['verbose']:
                 print("\n[AutoResolv] All libs parsed. Resolving now...\n")
@@ -395,6 +416,11 @@ class GUI_MAIN(QtWidgets.QDialog):
                 print("[AutoResolv] All done ")
 
             self.close()
+            
+        except Exception as e:
+            if hasattr(self, 'progress'):
+                self.progress.close()
+            QtWidgets.QMessageBox.critical(self, "Error", str(e))
 
     def on_parameter_modified(self):
         self.cache.CONFIG['libc'] = bool(self.c_libc.checkState())
