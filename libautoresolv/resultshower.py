@@ -111,30 +111,16 @@ class OpenLibInIDAHandler(idaapi.action_handler_t):
         selected_index = ctx.chooser_selection[0]
         selected_item = self.result_shower.items[selected_index]
         lib_path = selected_item[2]
-                
-        ida_path = self._get_ida_path()
+
+        # please configure the IDA executable path in the code        
+        ida_path = None  
+        
         if ida_path:
             subprocess.Popen([ida_path, lib_path])
             print(f"[AutoResolv] Successfully launched IDA to analyze library file: {lib_path}")
         else:
-            print("[AutoResolv] Unable to find IDA executable path")
+            print("[AutoResolv] Please configure the IDA executable path in the code, or manually open the library file")
         return 1
     
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
-    
-    def _get_ida_path(self):
-        try:
-            current_exe = sys.executable
-            
-            if current_exe and os.path.exists(current_exe):
-                print(f"[AutoResolv] Using current IDA path: {current_exe}")
-                return current_exe
-            
-        except Exception as e:
-            print(f"[AutoResolv] Failed to get current IDA path: {str(e)}")
-        
-        print("[AutoResolv] Unable to get IDA executable path")
-        return None
-        
-        
