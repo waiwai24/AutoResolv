@@ -24,13 +24,17 @@ from libautoresolv.error import *
 from libautoresolv.dbcache import *
 from libautoresolv.GUI.gui_export import GUI_EXPORT
 
+export_windows = []
+
 class GUI_MAIN(QtWidgets.QDialog):
     def __init__(self, cache):
-        QtWidgets.QDialog.__init__(self, None, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
+        QtWidgets.QDialog.__init__(self, None, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint)
         self.cache = cache
         self.setupUi()
         self.setupAction()
         self.setupLabel()
+        # Enable window close button
+        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, True)
 
     def setupUi(self):
         if not self.objectName():
@@ -202,7 +206,11 @@ class GUI_MAIN(QtWidgets.QDialog):
 
     def on_button_export(self):
         gui_export = GUI_EXPORT(self.cache)
-        gui_export.exec_()
+        gui_export.show()
+        gui_export.raise_()
+        gui_export.activateWindow()
+        export_windows.append(gui_export)
+        
         try:
             main_db = self.cache.modpath + gui_export.exported_db
         except AttributeError:

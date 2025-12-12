@@ -90,6 +90,9 @@ class Searcher(Kp_Menu_Context):
 
 
 p_initialized = False
+
+gui_windows = []
+
 #--------------------------------------------------------------------------
 # Plugin
 #--------------------------------------------------------------------------
@@ -175,7 +178,10 @@ class AutoResolv(idaapi.plugin_t):
             
 
             gui_start = GUI_START(bin_path)
-            gui_start.exec_()
+            gui_start.show()
+            gui_start.raise_()
+            gui_start.activateWindow()
+            gui_windows.append(gui_start)
 
             newpath = gui_start.newpath
             if newpath is None:
@@ -199,7 +205,10 @@ class AutoResolv(idaapi.plugin_t):
 
         cache.cache_save_bininfo(bin_path)
         gui_main = GUI_MAIN(cache)
-        gui_main.exec_()
+        gui_main.show()
+        gui_main.raise_()
+        gui_main.activateWindow()
+        gui_windows.append(gui_main)
         
     
     def run(self, arg):

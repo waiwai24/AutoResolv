@@ -23,12 +23,14 @@ from PyQt5.QtWidgets import *
 
 class GUI_START(QtWidgets.QDialog):
     def __init__(self, cpath):
-        QtWidgets.QDialog.__init__(self, None, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
+        QtWidgets.QDialog.__init__(self, None, QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowCloseButtonHint)
         self.cpath = cpath
         self.newpath = None
         self.setupUi()
         self.setupAction()
         self.setup_label()
+        # Enable window close button
+        self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, True)
 
     def setupUi(self):
         if not self.objectName():
