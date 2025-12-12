@@ -13,6 +13,10 @@
 # along with AutoResolv.  If not, see <http://www.gnu.org/licenses/>.
 
 import idaapi
+import subprocess
+import os
+import sys
+
 
 #class for result print on IDA
 class ResultShower(idaapi.Choose):
@@ -53,6 +57,7 @@ class ResultShower(idaapi.Choose):
         self.items = items
         self.selcount = 0
         self.n = len(items)
+        self.popup_names = ["Open lib in ida"]
 
     def OnClose(self):
         return
@@ -72,7 +77,64 @@ class ResultShower(idaapi.Choose):
     def OnGetSize(self):
         n = len(self.items)
         return n
+    def OnPopup(self, form, popup_handle):
+        idaapi.attach_action_to_popup(form, popup_handle, "AutoResolv:OpenLibInIDA", None)
+        return True
 
     def show(self):
+        self._register_actions()
         return self.Show() >= 0
+    
+    def _register_actions(self):
+
+        action_desc = idaapi.action_desc_t(
+            "AutoResolv:OpenLibInIDA",
+            "Open Library in IDA",
+            OpenLibInIDAHandler(self),
+            None,
+            None,
+            0
+        )
+        
+        idaapi.register_action(action_desc)
+    
+    def _unregister_actions(self):
+        idaapi.unregister_action("AutoResolv:OpenLibInIDA")
+
+class OpenLibInIDAHandler(idaapi.action_handler_t):
+    
+    def __init__(self, result_shower):
+        idaapi.action_handler_t.__init__(self)
+        self.result_shower = result_shower
+    
+    def activate(self, ctx):
+        selected_index = ctx.chooser_selection[0]
+        selected_item = self.result_shower.items[selected_index]
+        lib_path = selected_item[2]
+                
+        ida_path = self._get_ida_path()
+        if ida_path:
+            subprocess.Popen([ida_path, lib_path])
+            print(f"[AutoResolv] Successfully launched IDA to analyze library file: {lib_path}")
+        else:
+            print("[AutoResolv] Unable to find IDA executable path")
+        return 1
+    
+    def update(self, ctx):
+        return idaapi.AST_ENABLE_ALWAYS
+    
+    def _get_ida_path(self):
+        try:
+            current_exe = sys.executable
+            
+            if current_exe and os.path.exists(current_exe):
+                print(f"[AutoResolv] Using current IDA path: {current_exe}")
+                return current_exe
+            
+        except Exception as e:
+            print(f"[AutoResolv] Failed to get current IDA path: {str(e)}")
+        
+        print("[AutoResolv] Unable to get IDA executable path")
+        return None
+        
         
