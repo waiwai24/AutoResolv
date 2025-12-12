@@ -111,12 +111,12 @@ def getLibsFromBin(binary):
     except Exception as e:
         raise Exception("[AutoResolv] Couldn't open binary, Aborting !")
     for lib in libs:
-        path_lib = "/usr/lib/" + lib
+        path_lib = os.path.join("/usr/lib", lib)
         _exist = os.path.exists(path_lib)
         if _exist:
             libs[lib] = path_lib
 
-        path_lib =  "/lib/x86_64-linux-gnu/" + lib
+        path_lib = os.path.join("/lib/x86_64-linux-gnu", lib)
         _exist = os.path.exists(path_lib)
         if _exist:
             libs[lib] = path_lib
@@ -132,8 +132,8 @@ def getLibsFromBin(binary):
                 return libs, None
 
             for lib in dir:
-                if not os.path.isdir(rpath_ + "/" + lib):
-                    path_lib =  rpath_ + "/" + lib
+                if not os.path.isdir(os.path.join(rpath_, lib)):
+                    path_lib = os.path.join(rpath_, lib)
                     _exist = os.path.exists(path_lib)
                     if _exist:
                         double = False

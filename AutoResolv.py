@@ -155,12 +155,11 @@ class AutoResolv(idaapi.plugin_t):
     def main(self):
         print(f"AutoResolv {VERSION}")
 
-
-
-        module_path = os.path.dirname(__file__) + "/libautoresolv/db/"
+        module_path = os.path.join(os.path.dirname(__file__), "libautoresolv", "db")
+        os.makedirs(module_path, exist_ok=True)
         binary_name = idaapi.get_root_filename()
-        db_path = module_path + ".cache_" + binary_name + ".db"
-        bin_path = os.getcwd() + "/" +  binary_name
+        db_path = os.path.join(module_path, ".cache_" + binary_name + ".db")
+        bin_path = os.path.join(os.getcwd(), binary_name)
 
         cache = DB_CACHE_MANAGER(db_path, module_path, bin_path)
         con = cache.check_cache_con()

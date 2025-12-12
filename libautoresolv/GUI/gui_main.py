@@ -267,20 +267,20 @@ class GUI_MAIN(QtWidgets.QDialog):
 
     
         newpath = self.lineedit_lib_path.text()
-        if not newpath.endswith("/"):
-            newpath += "/"
+        if not newpath.endswith(os.sep):
+            newpath += os.sep
         foundNewLibrary = False
         self.cache.parse_libinfo_cache()
         for lib in self.cache.libsinfo:
-            _exist = os.path.exists(newpath + lib)
+            _exist = os.path.exists(os.path.join(newpath, lib))
             if (_exist):
 
                 print(f"[AutoResolv] Librairy {lib} found !")
-                self.cache.setNewLibPath(lib, newpath + lib, self.cache.CONFIG)
+                self.cache.setNewLibPath(lib, os.path.join(newpath, lib), self.cache.CONFIG)
                 items = self.lib_list.findItems(lib, QtCore.Qt.MatchContains)
                 row = self.lib_list.row(items[0])
                 self.lib_list.takeItem(row)
-                self.lib_list.addItem(f"{lib} | {newpath + lib}")
+                self.lib_list.addItem(f"{lib} | {os.path.join(newpath, lib)}")
                 if not foundNewLibrary:
                     self.libpath_list.addItem(newpath)
                     self.cache.rpath.append(newpath)

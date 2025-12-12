@@ -91,7 +91,7 @@ class GUI_EXPORT(QtWidgets.QDialog):
 
     def list_cache(self):
         try:
-            module_path = os.path.dirname(__file__) + "/../db/"
+            module_path = os.path.join(os.path.dirname(__file__), "..", "db") + os.sep
             db = os.listdir(module_path)
             return db
         except FileNotFoundError:
