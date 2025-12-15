@@ -27,15 +27,15 @@ from libautoresolv.error import *
 from collections import defaultdict
 
 def get_seg(segname):
-        for s in idautils.Segments():
-            seg = idaapi.getseg(s)
-            name = idc.get_segm_name(s)
-            if name == segname:
-                start = seg.start_ea
-                end = seg.end_ea
-                return start, end
-        
-        return None,None
+    for s in idautils.Segments():
+        seg = idaapi.getseg(s)
+        name = idc.get_segm_name(s)
+        if name == segname:
+            start = seg.start_ea
+            end = seg.end_ea
+            return start, end
+    
+    return None,None
         
 def get_extern(s,e):
     external = {}
@@ -208,28 +208,64 @@ def CommentFuns(external_resolved, config):
             
 
 def getSignature(values, config):
-    
+
     s,e = get_seg(".text")
+    if s is None or e is None:
+        print(f"[AutoResolv] ERROR: Could not find .text segment in current binary")
+        return 0, {}
+
     all_funs = get_funs(s,e)
-    
+
+    binary_name = idaapi.get_root_filename()
     allsigs = {}
     cpt = 0
+    matched_libs = set()
+    skipped_count = 0
+
     for i in range(len(values)):
         try:
 
             fun_name = values[i][0]
             lib = values[i][1]
-            binary_name = idaapi.get_root_filename()
 
             if lib in binary_name: #check is not severe because binary_name can be libcustom.so.4.0.0 and libname = libcustom.so.4
+                matched_libs.add(lib)
+
+                if fun_name not in all_funs:
+                    if config['verbose']:
+                        print(f"[AutoResolv] getSignature: Function '{fun_name}' from library '{lib}' not found in current binary's .text segment")
+                    skipped_count += 1
+                    continue
+
                 ea = all_funs[fun_name]
+
+                if config['verbose']:
+                    print(f"[AutoResolv] getSignature: Decompiling function '{fun_name}' at 0x{ea:x}")
+
                 signature = str(idaapi.decompile(ea)).split("\n")[0] + ";"
                 allsigs[fun_name] = signature
                 cpt += 1
-        except Exception:
-            if config['verbose']:
-                print(f"[AutoResolv] Couldn't get signature from {fun_name}, Skipping")
 
+                if config['verbose']:
+                    print(f"[AutoResolv] getSignature: ✓ Extracted signature: {signature}")
+            else:
+                pass
+
+        except KeyError as e:
+            if config['verbose']:
+                print(f"[AutoResolv] getSignature: Function '{fun_name}' not found in .text segment functions")
+            skipped_count += 1
+        except Exception as e:
+            if config['verbose']:
+                print(f"[AutoResolv] getSignature: ERROR: Couldn't get signature from '{fun_name}': {str(e)}")
+            skipped_count += 1
+
+    if config['verbose']:
+        print(f"[AutoResolv] getSignature: ========== Summary ==========")
+        print(f"[AutoResolv] getSignature: Matched libraries: {matched_libs if matched_libs else 'None'}")
+        print(f"[AutoResolv] getSignature: Successfully extracted: {cpt} signatures")
+        print(f"[AutoResolv] getSignature: Skipped/Failed: {skipped_count} functions")
+        print(f"[AutoResolv] getSignature: ================================")
 
     return cpt, allsigs
 
@@ -239,37 +275,89 @@ def refactorExtern(signature, config):
     all_funs1 = None
     if s is not None and e is not None:
         all_funs1 = get_extern(s,e)
+        if config['verbose']:
+            print(f"[AutoResolv] refactorExtern: Found {len(all_funs1)} functions in .plt segment")
+    else:
+        if config['verbose']:
+            print(f"[AutoResolv] refactorExtern: .plt segment not found")
 
+    
     all_funs2 = None
     if s2 is not None and e2 is not None:
-        all_funs2 = get_extern(s2,e2)
+        all_funs2 = get_extern(s2, e2)
+        if config['verbose']:
+            print(f"[AutoResolv] refactorExtern: Found {len(all_funs2)} functions in .plt.sec segment")
+    else:
+        if config['verbose']:
+            print(f"[AutoResolv] refactorExtern: .plt.sec segment not found")
 
-    all_funs = dict(all_funs1)
-    all_funs.update(all_funs2)
-    
+    all_funs = {}
+    if all_funs1 is not None:
+        all_funs.update(all_funs1)
+    if all_funs2 is not None:
+        all_funs.update(all_funs2)
+
+    if len(all_funs) == 0:
+        print(f"[AutoResolv] refactorExtern: ERROR: No external functions found in .plt or .plt.sec segments!")
+        return 0, 0
+
+    if config['verbose']:
+        print(f"[AutoResolv] refactorExtern: Total {len(all_funs)} external functions to check")
+        print(f"[AutoResolv] refactorExtern: Function names: {list(all_funs.keys())[:10]}..." if len(all_funs) > 10 else f"[AutoResolv] refactorExtern: Function names: {list(all_funs.keys())}")
+
     cpt = 0
     xref_cpt = 0
     for sig in signature:
+        matched = False
         for fun in all_funs:
-
             try:
-            
-                fun = fun.split(".")[1] #wrapper are .fun_name
-                if fun == sig:
+                # Wrapper functions have format ".fun_name"
+                if "." not in fun:
+                    continue
+
+                fun_name = fun.split(".")[1]  # Extract function name from wrapper
+
+                if fun_name == sig:
+                    matched = True
                     call_type = signature[sig]
-                    ea = all_funs["." + fun]
-                    xrefs= idautils.XrefsTo(ea)
+                    ea = all_funs["." + fun_name]
+
+                    if config['verbose']:
+                        print(f"[AutoResolv] refactorExtern: Applying signature to '{fun_name}' at 0x{ea:x}")
+                        print(f"[AutoResolv] refactorExtern: Signature: {call_type}")
+
+                    # Set type for the wrapper function
                     idc.SetType(ea, call_type)
+
+                    # Set type for all cross-references
+                    xrefs = idautils.XrefsTo(ea)
                     for xref in xrefs:
                         idc.SetType(xref.frm, call_type)
                         xref_cpt += 1
 
                     cpt += 1
-            except Exception:
-                if config['verbose']:
-                    print(f"[AutoResolv] Couldn't refactor {fun}, Skipping")
+                    if config['verbose']:
+                        print(f"[AutoResolv] refactorExtern: ✓ Successfully refactored '{fun_name}' and {xref_cpt} xrefs")
+                    break  # Found match, move to next signature
 
-    return cpt,xref_cpt
+            except IndexError:
+                # Function name doesn't have "." separator
+                if config['verbose']:
+                    print(f"[AutoResolv] refactorExtern: Skipping '{fun}' - invalid wrapper format")
+            except Exception as e:
+                if config['verbose']:
+                    print(f"[AutoResolv] refactorExtern: ERROR: Couldn't refactor '{fun}': {str(e)}")
+
+        if not matched and config['verbose']:
+            print(f"[AutoResolv] refactorExtern: WARNING: No matching wrapper found for signature '{sig}'")
+
+    if config['verbose']:
+        print(f"[AutoResolv] refactorExtern: ========== Summary ==========")
+        print(f"[AutoResolv] refactorExtern: Successfully refactored: {cpt} functions")
+        print(f"[AutoResolv] refactorExtern: Successfully refactored: {xref_cpt} cross-references")
+        print(f"[AutoResolv] refactorExtern: ================================")
+
+    return cpt, xref_cpt
 
 
 

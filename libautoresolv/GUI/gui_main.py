@@ -205,43 +205,59 @@ class GUI_MAIN(QtWidgets.QDialog):
 
 
     def on_button_export(self):
-        gui_export = GUI_EXPORT(self.cache)
-        gui_export.show()
-        gui_export.raise_()
-        gui_export.activateWindow()
-        export_windows.append(gui_export)
-        
         try:
-            main_db = self.cache.modpath + gui_export.exported_db
-        except AttributeError:
-            return
-        self.cache_extern = DB_CACHE_MANAGER(main_db, module_path=self.cache.modpath)
-        con = self.cache_extern.check_cache_con()
-        if con:
-            print(f"[AutoResolv] Extern DB Cache is UP")
-        else:
-            raise Exception(f"[AutoResolv] Extern DB Cache seem empty, can't export !")
+            print("[AutoResolv] ========== Export Signature File ==========")
 
-        self.cache_extern.parse_data_cache(no_check=True)
-        values = None
-        try:
+            # Show dialog and check if user cancelled
+            gui_export = GUI_EXPORT(self.cache)
+            if gui_export.exec_() == QtWidgets.QDialog.Rejected:
+                return
+
+            # Check if database was selected
+            if not hasattr(gui_export, 'exported_db'):
+                print("[AutoResolv] ERROR: No database selected")
+                return
+
+            # Load main binary's cache
+            main_db = os.path.join(self.cache.modpath, gui_export.exported_db)
+            self.cache_extern = DB_CACHE_MANAGER(main_db, module_path=self.cache.modpath)
+
+            if not self.cache_extern.check_cache_con():
+                QtWidgets.QMessageBox.critical(self, "Export Error",
+                    "Main binary cache is empty. Please run 'Resolve' on the main binary first!")
+                return
+
+            # Get resolved functions from main binary's cache
+            self.cache_extern.parse_data_cache(no_check=True)
             values = self.cache_extern.cached_data
-        except Exception:
-            raise Exception("Returned values from cache is None ! Resolve at least one time on main binary is required")
-        
-        if self.cache.CONFIG['verbose']:
-            print(f"[AutoResolv] Parsed external cache.")
-        
-        if self.cache.CONFIG['verbose']:
-            print(f"[AutoResolv] Starting exporting")
-        cpt, allsig = getSignature(values, self.cache.CONFIG)
-        if self.cache.CONFIG['verbose']:
-            print(f"[AutoResolv] Done exported {cpt} functions signature")
 
-        self.cache_extern.save_signature(allsig)
+            if not values:
+                QtWidgets.QMessageBox.critical(self, "Export Error",
+                    "No resolved functions found in cache.\n\nPlease run 'Resolve' on the main binary first.")
+                return
 
-        if self.cache.CONFIG['verbose']:
-            print(f"[AutoResolv] Saved all data to cache, you can now import on main binary to start refactor")
+            # Extract signatures from current library
+            print("[AutoResolv] Extracting function signatures...")
+            cpt, allsig = getSignature(values, self.cache.CONFIG)
+
+            if cpt == 0:
+                QtWidgets.QMessageBox.warning(self, "Export Warning",
+                    "No matching functions found!\n\nMake sure you opened the correct library file.")
+                return
+
+            # Save signatures
+            self.cache_extern.save_signature(allsig)
+            print(f"[AutoResolv] Successfully exported {cpt} function signatures")
+
+            QtWidgets.QMessageBox.information(self, "Export Successful",
+                f"Exported {cpt} function signatures!\n\nYou can now import them in the main binary.")
+            print("[AutoResolv] ========== Export Complete ==========")
+
+        except Exception as e:
+            print(f"[AutoResolv] FATAL ERROR: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            QtWidgets.QMessageBox.critical(self, "Export Error", f"Export failed:\n{str(e)}")
         
     
 

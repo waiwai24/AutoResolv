@@ -73,11 +73,28 @@ class GUI_EXPORT(QtWidgets.QDialog):
     def setup_label(self):
         self.v_cache_i.setText("")
         cachelist = self.list_cache()
+
+        # Get current binary name to filter it out
+        current_binary = idaapi.get_root_filename()
+        current_cache = f".cache_{current_binary}.db"
+
+        # Add cache files to list, excluding current library's cache
+        added_count = 0
         for file in cachelist:
-            self.listcache.addItem(file)
-        
-        binary = idaapi.get_input_file_path()
-        self.v_cache_i.setText("Will parse {} resolved function and export {} signature".format(file, binary))
+            if "No db found in" in file:
+                self.listcache.addItem(file)
+                added_count += 1
+            elif file.endswith(".db"):
+                # Skip current library's own cache
+                if file != current_cache:
+                    self.listcache.addItem(file)
+                    added_count += 1
+
+        if added_count == 0:
+            self.listcache.addItem("No main binary cache found!")
+            self.v_cache_i.setText("Please run 'Resolve' on the main binary first")
+        else:
+            self.v_cache_i.setText(f"Select main binary's cache to export signatures from {current_binary}")
         
 
     def setupAction(self):
@@ -85,21 +102,49 @@ class GUI_EXPORT(QtWidgets.QDialog):
         self.listcache.itemClicked.connect(self.modify_action)
 
     def on_button_export(self):
-        if "No db found in" in self.v_cache_i.text():
-            raise Exception("No db selected")
+        current_item = self.listcache.currentItem()
+        if current_item is None:
+            error_msg = "Please select a cache database from the list"
+            QtWidgets.QMessageBox.warning(self, "No Selection", error_msg)
+            return
 
-        self.exported_db= self.listcache.currentItem().text()
-        self.close()
+        selected_db = current_item.text()
+
+        if "No db found in" in selected_db or "No main binary cache found" in selected_db:
+            error_msg = "Invalid selection. Please run 'Resolve' on the main binary first to create a cache database."
+            QtWidgets.QMessageBox.critical(self, "Invalid Selection", error_msg)
+            return
+
+        self.exported_db = selected_db
+        self.accept()  # Use accept() instead of close() to set dialog result to Accepted
 
     def list_cache(self):
         try:
             module_path = os.path.join(os.path.dirname(__file__), "..", "db") + os.sep
+
+            if not os.path.exists(module_path):
+                return [f"No db found in {module_path}"]
+
             db = os.listdir(module_path)
             return db
         except FileNotFoundError:
-            return ["No db found in {}".format(module_path)]
+            return [f"No db found in {module_path}"]
+        except Exception as e:
+            return [f"Error listing cache: {str(e)}"]
 
     def modify_action(self):
-        item = self.listcache.currentItem().text()
-        binary = idaapi.get_input_file_path()
-        self.v_cache_i.setText("Will parse {} resolved function and export {} signature".format(item, binary))
+        current_item = self.listcache.currentItem()
+        if current_item is None:
+            return
+
+        selected_cache = current_item.text()
+        current_binary = idaapi.get_root_filename()
+
+        if "No db found in" in selected_cache or "No main binary cache found" in selected_cache:
+            self.v_cache_i.setText("Invalid selection - no cache available")
+        else:
+            if selected_cache.startswith(".cache_") and selected_cache.endswith(".db"):
+                main_binary_name = selected_cache[7:-3]
+                self.v_cache_i.setText(f"Will export signatures from '{current_binary}' to '{main_binary_name}' cache")
+            else:
+                self.v_cache_i.setText(f"Will parse {selected_cache} and export {current_binary} signatures")
