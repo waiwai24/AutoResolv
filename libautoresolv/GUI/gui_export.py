@@ -78,6 +78,9 @@ class GUI_EXPORT(QtWidgets.QDialog):
         current_binary = idaapi.get_root_filename()
         current_cache = f".cache_{current_binary}.db"
 
+        # Set window title with binary name
+        self.setWindowTitle(f"Export - {current_binary}")
+
         # Add cache files to list, excluding current library's cache
         added_count = 0
         for file in cachelist:

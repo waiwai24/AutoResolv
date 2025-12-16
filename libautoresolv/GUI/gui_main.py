@@ -163,6 +163,10 @@ class GUI_MAIN(QtWidgets.QDialog):
 
 
     def setupLabel(self):
+        # Set window title with binary name
+        binary_name = idaapi.get_root_filename()
+        self.setWindowTitle(f"AutoResolv - {binary_name}")
+
         self.c_comment.setChecked(self.cache.CONFIG['comment'])
         self.c_libc.setChecked(self.cache.CONFIG['libc'])
         self.c_demangle.setChecked(self.cache.CONFIG['demangle'])

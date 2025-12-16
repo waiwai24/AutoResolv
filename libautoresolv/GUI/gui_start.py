@@ -19,6 +19,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import os
 from PyQt5.QtWidgets import *
+import idaapi
 
 
 class GUI_START(QtWidgets.QDialog):
@@ -60,6 +61,10 @@ class GUI_START(QtWidgets.QDialog):
         self.pushButton.setText(QCoreApplication.translate("BinaryManagement", u"Set New Binary Path", None))
 
     def setup_label(self):
+        # Set window title with binary name
+        binary_name = idaapi.get_root_filename()
+        self.setWindowTitle(f"Binary Management - {binary_name}")
+
         self.textEdit.setText(self.cpath)
 
     def setupAction(self):
