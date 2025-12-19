@@ -741,19 +741,25 @@ class GUI_MAIN(QtWidgets.QDialog):
             total_libs = len(self.cache.libsinfo)
             self.progress = QProgressDialog("Parsing libraries...", "Cancel", 0, total_libs, self)
             self.progress.setWindowModality(Qt.WindowModal)
-            self.progress.setAutoClose(True)
+            self.progress.setAutoClose(False)  # Manual close for better control
+            self.progress.setMinimumDuration(0)  # Show immediately
             self.progress.show()
+            QCoreApplication.processEvents()  # Force initial display
 
             self.libsfun = {}
             for i, lib in enumerate(self.cache.libsinfo):
-                self.progress.setValue(i)
+                # Update UI before processing
                 self.progress.setLabelText(f"Parsing library: {lib} ({i+1}/{total_libs})")
+                self.progress.setValue(i)
+                QCoreApplication.processEvents()  # Refresh UI immediately
+
                 if self.progress.wasCanceled():
                     self.progress.close()
                     return
 
+                # Perform time-consuming operation
                 funs = getAllFunsFromLib(self.cache.libsinfo[lib], self.cache.CONFIG['libc'])
-            
+
                 if funs is None:
                     if self.cache.CONFIG['verbose']:
                         print(f"[AutoResolv] Couldn't parse {lib}")
@@ -762,18 +768,26 @@ class GUI_MAIN(QtWidgets.QDialog):
                     if self.cache.CONFIG['verbose']:
                         print(f"[AutoResolv] Parsed {lib}")
                     self.libsfun[lib] = funs
-                
-                if (i + 1) % 5 == 0:
-                    QCoreApplication.processEvents()
+
+                # Update progress after completion
+                QCoreApplication.processEvents()  # Keep UI responsive
 
             self.progress.setValue(total_libs)
-            self.progress.close()
+            QCoreApplication.processEvents()
 
             if self.cache.CONFIG['verbose']:
                 print("\n[AutoResolv] All libs parsed. Resolving now...\n")
 
-            
+            # Show resolving phase with updated progress dialog
+            self.progress.setLabelText("Resolving functions...")
+            self.progress.setRange(0, 0)  # Indeterminate progress
+            QCoreApplication.processEvents()
+
             values, external_resolved= Resolve(funs_binary, self.libsfun, self.cache.libsinfo, self.cache.CONFIG)
+
+            # Restore progress dialog
+            self.progress.setRange(0, total_libs)
+            self.progress.setValue(total_libs)
             rs = ResultShower("Result", values, self.cache.CONFIG['demangle'])
             r = rs.show()
 

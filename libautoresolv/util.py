@@ -152,35 +152,43 @@ def getLibsFromBin(binary):
 
     return libs,rpath
 
-def Resolve(externalfuns, libs,paths, config):
+def Resolve(externalfuns, libs, paths, config):
         resolved = defaultdict(list)
         for fun in externalfuns:
             resolved[fun] = [externalfuns[fun], "Unknow Library"]
         values = []
 
-        #TODO : better algo search        
+        # Optimized algorithm using hash table - O(L×F + E) instead of O(L×F×E)
+        # Step 1: Build reverse index of library functions - O(L × F)
+        func_to_lib = {}  # {function_name: (lib_name, lib_path)}
         for lib in libs:
             for fun in libs[lib]:
-                for externalfun in externalfuns:
-                    externalfun_ = externalfun
-                    try:
-                        externalfun_ = externalfun.split(".")[1] #remove the .FUN_NAME from wrapper format
-                    except Exception:
-                        pass
-                    finally:
-                        if externalfun_ == fun:
-                            
-                            if (not config['demangle']):
-                                values.append([fun, lib, paths[lib]])
-                                resolved[externalfun] = [externalfuns[externalfun], lib]
-                            else:
-                                demangled_name = idc.demangle_name(fun, idc.get_inf_attr(idc.INF_SHORT_DN))
-                                if demangled_name == None:
-                                    demangled_name = fun
+                # Store last occurrence to match original behavior
+                func_to_lib[fun] = (lib, paths[lib])
 
-                                values.append([fun, lib, paths[lib] ,demangled_name])
-                                resolved[externalfun] = [externalfuns[externalfun], lib]
-                        
+        # Step 2: Match external functions using hash lookup - O(E)
+        for externalfun in externalfuns:
+            externalfun_ = externalfun
+            try:
+                externalfun_ = externalfun.split(".")[1]  # remove the .FUN_NAME from wrapper format
+            except Exception:
+                pass
+
+            # O(1) hash lookup instead of O(L × F) nested loops
+            if externalfun_ in func_to_lib:
+                lib, lib_path = func_to_lib[externalfun_]
+
+                if not config['demangle']:
+                    values.append([externalfun_, lib, lib_path])
+                    resolved[externalfun] = [externalfuns[externalfun], lib]
+                else:
+                    demangled_name = idc.demangle_name(externalfun_, idc.get_inf_attr(idc.INF_SHORT_DN))
+                    if demangled_name == None:
+                        demangled_name = externalfun_
+
+                    values.append([externalfun_, lib, lib_path, demangled_name])
+                    resolved[externalfun] = [externalfuns[externalfun], lib]
+
         return values, resolved
 
 def CommentFuns(external_resolved, config):
