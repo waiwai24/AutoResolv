@@ -530,20 +530,104 @@ class GUI_MAIN(QtWidgets.QDialog):
 
     def on_button_cleandb(self):
         try:
-            if hasattr(self.cache, 'close'):
-                self.cache.close()
-            os.remove(self.cache.db_path)
-            if self.cache.CONFIG['verbose']:
-                print("[AutoResolv] Cleaned DB Cache successful")
+            # Confirm deletion with user
+            reply = QtWidgets.QMessageBox.question(
+                self,
+                "Confirm Clean Cache",
+                "Are you sure you want to delete the cache database?\n\nThis will remove all resolved function data.",
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                QtWidgets.QMessageBox.No
+            )
+
+            if reply == QtWidgets.QMessageBox.No:
+                return
+
+            # Close database connection properly with error handling
+            try:
+                if hasattr(self.cache, 'con') and self.cache.con:
+                    # Commit any pending transactions
+                    try:
+                        self.cache.con.commit()
+                    except:
+                        pass
+
+                if hasattr(self.cache, 'close'):
+                    self.cache.close()
+            except Exception as close_error:
+                # Database might already be closed, continue anyway
+                if self.cache.CONFIG['verbose']:
+                    print(f"[AutoResolv] Note: {str(close_error)}")
+
+            # Force garbage collection to release any remaining references
+            import gc
+            gc.collect()
+
+            # Retry mechanism for file deletion
+            import time
+            max_retries = 3
+            retry_delay = 0.2
+
+            for attempt in range(max_retries):
+                try:
+                    # Wait for OS to release file handle
+                    time.sleep(retry_delay)
+
+                    # Attempt to remove the database file
+                    os.remove(self.cache.db_path)
+
+                    if self.cache.CONFIG['verbose']:
+                        print("[AutoResolv] Cleaned DB Cache successful")
+
+                    QtWidgets.QMessageBox.information(
+                        self,
+                        "Cache Cleaned",
+                        "Database cache has been successfully deleted."
+                    )
+                    break  # Success, exit retry loop
+
+                except PermissionError as e:
+                    if attempt < max_retries - 1:
+                        # Not the last attempt, try again
+                        if self.cache.CONFIG['verbose']:
+                            print(f"[AutoResolv] Retry {attempt + 1}/{max_retries}: File still locked, waiting...")
+                        gc.collect()  # Force another garbage collection
+                        continue
+                    else:
+                        # Last attempt failed
+                        error_msg = "Cannot delete cache file - it is still in use.\n\n"
+                        error_msg += "The database connection may not have been fully released.\n"
+                        error_msg += "Please try closing and reopening IDA Pro, then try again."
+
+                        if self.cache.CONFIG['verbose']:
+                            print(f"[AutoResolv] Failed to clean DB Cache after {max_retries} attempts: {str(e)}")
+
+                        QtWidgets.QMessageBox.critical(
+                            self,
+                            "Permission Error",
+                            error_msg
+                        )
+                        return  # Don't close the window if deletion failed
+
         except FileNotFoundError:
             if self.cache.CONFIG['verbose']:
                 print("[AutoResolv] DB Cache file not found, assuming already cleaned")
-        except PermissionError as e:
-            if self.cache.CONFIG['verbose']:
-                print(f"[AutoResolv] Failed to clean DB Cache: {str(e)}")
+            QtWidgets.QMessageBox.warning(
+                self,
+                "File Not Found",
+                "Cache database file not found. It may have already been deleted."
+            )
         except Exception as e:
+            error_msg = f"Failed to clean cache: {str(e)}"
             if self.cache.CONFIG['verbose']:
                 print(f"[AutoResolv] Failed to clean DB Cache: {str(e)}")
+                import traceback
+                traceback.print_exc()
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Error",
+                error_msg
+            )
+            return  # Don't close the window if deletion failed
 
         self.close()
         

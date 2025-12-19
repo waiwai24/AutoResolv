@@ -200,13 +200,28 @@ def CommentFuns(external_resolved, config):
                 ea = external_resolved[fun][0]
                 lib = external_resolved[fun][1]
                 xrefs= idautils.XrefsTo(ea)
-                if "Unknow Library" in lib:
+                if "Unknown Library" in lib:
                     continue
-                idc.set_cmt(ea, lib, 1)
+
+                # Set comment at function address, append if already exists
+                existing_cmt = idc.get_cmt(ea, 0)
+                if existing_cmt:
+                    if lib not in existing_cmt:
+                        idc.set_cmt(ea, f"{existing_cmt}, {lib}", 0)
+                else:
+                    idc.set_cmt(ea, lib, 0)
                 fun_cpt += 1
+
+                # Set comment at cross-reference locations, append if already exists
                 for xref in xrefs:
-                    idc.set_cmt(xref.frm, lib, 1)
-                    xref_cpt += 1
+                    existing_xref_cmt = idc.get_cmt(xref.frm, 0)
+                    if existing_xref_cmt:
+                        if lib not in existing_xref_cmt:
+                            idc.set_cmt(xref.frm, f"{existing_xref_cmt}, {lib}", 0)
+                            xref_cpt += 1
+                    else:
+                        idc.set_cmt(xref.frm, lib, 0)
+                        xref_cpt += 1
             except Exception:
                 if config['verbose']:
                     print(f"[AutoResolv] Couldn't patch {fun}, Skipping")
