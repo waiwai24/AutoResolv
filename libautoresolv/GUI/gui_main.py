@@ -39,178 +39,393 @@ class GUI_MAIN(QtWidgets.QDialog):
     def setupUi(self):
         if not self.objectName():
             self.setObjectName(u"AutoResolv")
-        self.resize(1088, 718)
-        self.l_activeparam = QLabel(self)
-        self.l_activeparam.setObjectName(u"l_activeparam")
-        self.l_activeparam.setGeometry(QRect(240, 20, 181, 31))
-        self.b_cleandb = QPushButton(self)
-        self.b_cleandb.setObjectName(u"b_cleandb")
-        self.b_cleandb.setGeometry(QRect(330, 240, 181, 51))
-        self.b_resolve = QPushButton(self)
-        self.b_resolve.setObjectName(u"b_resolve")
-        self.b_resolve.setGeometry(QRect(130, 240, 181, 51))
-        self.c_libc = QCheckBox(self)
+        self.resize(1200, 750)
+        self.setMinimumSize(QSize(1000, 650))
+
+        # Apply IDA-style theme (clean white theme)
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #ffffff;
+            }
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #d0d0d0;
+                border-radius: 0px;
+                margin-top: 10px;
+                padding-top: 8px;
+                background-color: transparent;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 8px;
+                padding: 0 4px;
+                color: #000000;
+            }
+            QPushButton {
+                background-color: #f0f0f0;
+                color: #000000;
+                border: 1px solid #c0c0c0;
+                border-radius: 0px;
+                padding: 4px 10px;
+                min-height: 24px;
+            }
+            QPushButton:hover {
+                background-color: #e5e5e5;
+                border: 1px solid #b0b0b0;
+            }
+            QPushButton:pressed {
+                background-color: #d8d8d8;
+                border: 1px solid #a0a0a0;
+            }
+            QPushButton:disabled {
+                background-color: #f8f8f8;
+                color: #b0b0b0;
+                border: 1px solid #e0e0e0;
+            }
+            QCheckBox {
+                spacing: 6px;
+                color: #000000;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+            }
+            QListWidget {
+                border: 1px solid #d0d0d0;
+                border-radius: 0px;
+                background-color: white;
+                alternate-background-color: #fafafa;
+            }
+            QListWidget::item:selected {
+                background-color: #e0e0e0;
+                color: #000000;
+            }
+            QListWidget::item:hover {
+                background-color: #f0f0f0;
+            }
+            QLineEdit, QComboBox {
+                border: 1px solid #d0d0d0;
+                border-radius: 0px;
+                padding: 4px;
+                background-color: white;
+                color: #000000;
+            }
+            QLineEdit:focus, QComboBox:focus {
+                border: 1px solid #a0a0a0;
+                background-color: #ffffff;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QLabel {
+                color: #000000;
+            }
+        """)
+
+        # Main layout
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(12)
+
+        # ========== LEFT PANEL ==========
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(8)
+
+        # Parameters Group
+        params_group = QGroupBox("Active Parameters")
+        params_layout = QVBoxLayout(params_group)
+        params_layout.setContentsMargins(10, 15, 10, 10)
+        params_layout.setSpacing(6)
+
+        self.c_libc = QCheckBox("Resolve Libc functions")
         self.c_libc.setObjectName(u"c_libc")
-        self.c_libc.setGeometry(QRect(30, 70, 161, 23))
-        self.c_demangle = QCheckBox(self)
+        self.c_libc.setTristate(False)
+        params_layout.addWidget(self.c_libc)
+
+        self.c_demangle = QCheckBox("Demangle functions")
         self.c_demangle.setObjectName(u"c_demangle")
-        self.c_demangle.setGeometry(QRect(30, 100, 171, 23))
-        self.c_comment = QCheckBox(self)
+        self.c_demangle.setTristate(False)
+        params_layout.addWidget(self.c_demangle)
+
+        self.c_comment = QCheckBox("Comment IDA code")
         self.c_comment.setObjectName(u"c_comment")
-        self.c_comment.setGeometry(QRect(30, 130, 151, 23))
-        self.l_refactor = QLabel(self)
-        self.l_refactor.setObjectName(u"l_refactor")
-        self.l_refactor.setGeometry(QRect(280, 520, 171, 31))
-        self.b_refactor_import = QPushButton(self)
-        self.b_refactor_import.setObjectName(u"b_refactor_import")
-        self.b_refactor_import.setGeometry(QRect(120, 570, 181, 51))
-        self.b_refactor_export = QPushButton(self)
-        self.b_refactor_export.setObjectName(u"b_refactor_export")
-        self.b_refactor_export.setGeometry(QRect(340, 570, 181, 51))
-        self.separator = QFrame(self)
-        self.separator.setObjectName(u"separator")
-        self.separator.setGeometry(QRect(630, 10, 20, 691))
-        self.separator.setMinimumSize(QSize(20, 611))
-        self.separator.setFrameShape(QFrame.VLine)
-        self.separator.setFrameShadow(QFrame.Sunken)
-        self.label = QLabel(self)
-        self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(210, 670, 291, 20))
-        self.lib_info = QLabel(self)
-        self.lib_info.setObjectName(u"lib_info")
-        self.lib_info.setGeometry(QRect(770, 10, 231, 31))
-        self.combobox_lib = QComboBox(self)
-        self.combobox_lib.setObjectName(u"combobox_lib")
-        self.combobox_lib.setGeometry(QRect(730, 310, 281, 25))
-        self.lib_list = QListWidget(self)
-        self.lib_list.setObjectName(u"lib_list")
-        self.lib_list.setGeometry(QRect(660, 40, 421, 261))
-        self.lineedit_lib = QLineEdit(self)
-        self.lineedit_lib.setObjectName(u"lineedit_lib")
-        self.lineedit_lib.setGeometry(QRect(690, 350, 361, 25))
-        self.b_libchange = QPushButton(self)
-        self.b_libchange.setObjectName(u"b_libchange")
-        self.b_libchange.setGeometry(QRect(790, 390, 181, 51))
-        self.c_verbose = QCheckBox(self)
+        self.c_comment.setTristate(False)
+        params_layout.addWidget(self.c_comment)
+
+        self.c_verbose = QCheckBox("Verbose Mode")
         self.c_verbose.setObjectName(u"c_verbose")
-        self.c_verbose.setGeometry(QRect(30, 160, 141, 23))
+        self.c_verbose.setTristate(False)
+        params_layout.addWidget(self.c_verbose)
 
-        # Create Informations section with modern layout
-        self.info_groupbox = QGroupBox(self)
+        left_layout.addWidget(params_group)
+
+        # Actions Group
+        actions_group = QGroupBox("Actions")
+        actions_layout = QVBoxLayout(actions_group)
+        actions_layout.setContentsMargins(10, 15, 10, 10)
+        actions_layout.setSpacing(6)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(6)
+
+        self.b_resolve = QPushButton("Resolve")
+        self.b_resolve.setObjectName(u"b_resolve")
+        self.b_resolve.setMinimumHeight(28)
+        buttons_layout.addWidget(self.b_resolve)
+
+        self.b_cleandb = QPushButton("Clean DB Cache")
+        self.b_cleandb.setObjectName(u"b_cleandb")
+        self.b_cleandb.setMinimumHeight(28)
+        buttons_layout.addWidget(self.b_cleandb)
+
+        actions_layout.addLayout(buttons_layout)
+        left_layout.addWidget(actions_group)
+
+        # Information Group
+        self.info_groupbox = QGroupBox("Information")
         self.info_groupbox.setObjectName(u"info_groupbox")
-        self.info_groupbox.setGeometry(QRect(10, 330, 610, 160))
-        self.info_groupbox.setTitle("Informations")
 
-        # Create form layout for label-value pairs
         self.info_layout = QFormLayout(self.info_groupbox)
         self.info_layout.setObjectName(u"info_layout")
-        self.info_layout.setContentsMargins(10, 20, 10, 10)
-        self.info_layout.setHorizontalSpacing(15)
-        self.info_layout.setVerticalSpacing(12)
+        self.info_layout.setContentsMargins(10, 15, 10, 10)
+        self.info_layout.setHorizontalSpacing(10)
+        self.info_layout.setVerticalSpacing(8)
 
-        # Create labels for the form
-        self.l_info_db_path = QLabel(self.info_groupbox)
+        self.l_info_db_path = QLabel("DB Cache Path:")
         self.l_info_db_path.setObjectName(u"l_info_db_path")
 
-        self.v_info_db_path = QLabel(self.info_groupbox)
+        self.v_info_db_path = QLabel()
         self.v_info_db_path.setObjectName(u"v_info_db_path")
         self.v_info_db_path.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.v_info_db_path.setWordWrap(False)
-        self.v_info_db_path.setStyleSheet("QLabel { color: #c01c28; font-style: italic; }")
+        self.v_info_db_path.setWordWrap(True)
+        self.v_info_db_path.setStyleSheet("QLabel { color: #505050; font-style: italic; }")
 
-        self.l_info_db_value = QLabel(self.info_groupbox)
+        self.l_info_db_value = QLabel("DB Contains Data:")
         self.l_info_db_value.setObjectName(u"l_info_db_value")
 
-        self.v_info_db_value = QLabel(self.info_groupbox)
+        self.v_info_db_value = QLabel()
         self.v_info_db_value.setObjectName(u"v_info_db_value")
-        self.v_info_db_value.setStyleSheet("QLabel { color: #c01c28; font-style: italic; }")
+        self.v_info_db_value.setStyleSheet("QLabel { color: #505050; font-style: italic; }")
 
-        self.l_info_bin_path = QLabel(self.info_groupbox)
+        self.l_info_bin_path = QLabel("Binary Path:")
         self.l_info_bin_path.setObjectName(u"l_info_bin_path")
 
-        self.v_info_bin_path = QLabel(self.info_groupbox)
+        self.v_info_bin_path = QLabel()
         self.v_info_bin_path.setObjectName(u"v_info_bin_path")
         self.v_info_bin_path.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.v_info_bin_path.setWordWrap(False)
-        self.v_info_bin_path.setStyleSheet("QLabel { color: #c01c28; font-style: italic; }")
+        self.v_info_bin_path.setWordWrap(True)
+        self.v_info_bin_path.setStyleSheet("QLabel { color: #505050; font-style: italic; }")
 
-        # Add rows to form layout
         self.info_layout.addRow(self.l_info_db_path, self.v_info_db_path)
         self.info_layout.addRow(self.l_info_db_value, self.v_info_db_value)
         self.info_layout.addRow(self.l_info_bin_path, self.v_info_bin_path)
 
-        self.lineedit_lib_path = QLineEdit(self)
-        self.lineedit_lib_path.setObjectName(u"lineedit_lib_path")
-        self.lineedit_lib_path.setGeometry(QRect(700, 600, 361, 25))
-        self.b_libpathchange = QPushButton(self)
-        self.b_libpathchange.setObjectName(u"b_libpathchange")
-        self.b_libpathchange.setGeometry(QRect(790, 640, 181, 51))
-        self.libpath_list = QListWidget(self)
+        left_layout.addWidget(self.info_groupbox)
+
+        # Refactor Group
+        refactor_group = QGroupBox("Signature Management")
+        refactor_layout = QVBoxLayout(refactor_group)
+        refactor_layout.setContentsMargins(10, 15, 10, 10)
+        refactor_layout.setSpacing(6)
+
+        refactor_buttons_layout = QHBoxLayout()
+        refactor_buttons_layout.setSpacing(6)
+
+        self.b_refactor_import = QPushButton("Import Signature")
+        self.b_refactor_import.setObjectName(u"b_refactor_import")
+        self.b_refactor_import.setMinimumHeight(28)
+        refactor_buttons_layout.addWidget(self.b_refactor_import)
+
+        self.b_refactor_export = QPushButton("Export Signature")
+        self.b_refactor_export.setObjectName(u"b_refactor_export")
+        self.b_refactor_export.setMinimumHeight(28)
+        refactor_buttons_layout.addWidget(self.b_refactor_export)
+
+        refactor_layout.addLayout(refactor_buttons_layout)
+        left_layout.addWidget(refactor_group)
+
+        # Version label at bottom (no stretch to keep balanced with right panel)
+        left_layout.addSpacing(12)
+        self.label = QLabel("AutoResolv dev-v0.90p | Thibault Poncetta")
+        self.label.setObjectName(u"label")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setStyleSheet("QLabel { color: #666; font-size: 9pt; }")
+        left_layout.addWidget(self.label)
+
+        main_layout.addWidget(left_panel)
+
+        # ========== RIGHT PANEL ==========
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(8)
+
+        # Libraries List Group
+        self.libs_group = QGroupBox("Libraries Management")
+        libs_layout = QVBoxLayout(self.libs_group)
+        libs_layout.setContentsMargins(10, 15, 10, 10)
+        libs_layout.setSpacing(6)
+
+        self.lib_list = QListWidget()
+        self.lib_list.setObjectName(u"lib_list")
+        self.lib_list.setMinimumHeight(200)
+        libs_layout.addWidget(self.lib_list)
+
+        libs_layout.addWidget(QLabel("Select library to modify:"))
+
+        self.combobox_lib = QComboBox()
+        self.combobox_lib.setObjectName(u"combobox_lib")
+        self.combobox_lib.setMinimumHeight(26)
+        libs_layout.addWidget(self.combobox_lib)
+
+        libs_layout.addWidget(QLabel("New library path:"))
+
+        self.lineedit_lib = QLineEdit()
+        self.lineedit_lib.setObjectName(u"lineedit_lib")
+        self.lineedit_lib.setMinimumHeight(26)
+        self.lineedit_lib.setPlaceholderText("Enter new library path...")
+        libs_layout.addWidget(self.lineedit_lib)
+
+        self.b_libchange = QPushButton("Change Library Path")
+        self.b_libchange.setObjectName(u"b_libchange")
+        self.b_libchange.setMinimumHeight(28)
+        libs_layout.addWidget(self.b_libchange)
+
+        right_layout.addWidget(self.libs_group)
+
+        # Library Search Paths Group
+        self.libpaths_group = QGroupBox("Library Search Paths")
+        libpaths_layout = QVBoxLayout(self.libpaths_group)
+        libpaths_layout.setContentsMargins(10, 15, 10, 10)
+        libpaths_layout.setSpacing(6)
+
+        self.libpath_list = QListWidget()
         self.libpath_list.setObjectName(u"libpath_list")
-        self.libpath_list.setGeometry(QRect(660, 450, 421, 141))
+        self.libpath_list.setMinimumHeight(120)
+        self.libpath_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        libpaths_layout.addWidget(self.libpath_list)
+
+        libpaths_layout.addWidget(QLabel("Add new library search path:"))
+
+        self.lineedit_lib_path = QLineEdit()
+        self.lineedit_lib_path.setObjectName(u"lineedit_lib_path")
+        self.lineedit_lib_path.setMinimumHeight(26)
+        self.lineedit_lib_path.setPlaceholderText("Enter library directory path...")
+        libpaths_layout.addWidget(self.lineedit_lib_path)
+
+        self.b_libpathchange = QPushButton("Add Library Path")
+        self.b_libpathchange.setObjectName(u"b_libpathchange")
+        self.b_libpathchange.setMinimumHeight(28)
+        libpaths_layout.addWidget(self.b_libpathchange)
+
+        right_layout.addWidget(self.libpaths_group)
+
+        main_layout.addWidget(right_panel)
+
+        # Set stretch factors (left:right = 1:1)
+        main_layout.setStretch(0, 1)
+        main_layout.setStretch(1, 1)
 
         self.retranslateUi()
 
         QMetaObject.connectSlotsByName(self)
 
     def retranslateUi(self):
-        self.setWindowTitle(QCoreApplication.translate("AutoResolv", u"Dialog", None))
-        self.l_activeparam.setText(QCoreApplication.translate("AutoResolv", u"<html><head/><body><p><span style=\" font-size:14pt; font-weight:600;\">Active Parameters</span></p></body></html>", None))
-        self.b_cleandb.setText(QCoreApplication.translate("AutoResolv", u"Clean DB Cache", None))
-        self.b_resolve.setText(QCoreApplication.translate("AutoResolv", u"Resolve", None))
-        self.c_libc.setText(QCoreApplication.translate("AutoResolv", u"resolve Libc functions", None))
-        self.c_demangle.setText(QCoreApplication.translate("AutoResolv", u"demangle functions", None))
-        self.c_comment.setText(QCoreApplication.translate("AutoResolv", u"comment IDA code", None))
-        self.l_info_db_path.setText(QCoreApplication.translate("AutoResolv", u"DB Cache Path:", None))
-        self.v_info_db_path.setText(QCoreApplication.translate("AutoResolv", u"DB_PATH_VALUE", None))
-        self.l_info_db_value.setText(QCoreApplication.translate("AutoResolv", u"DB Contains Data:", None))
-        self.v_info_db_value.setText(QCoreApplication.translate("AutoResolv", u"DB_CONTAIN_DATA_VALUE", None))
-        self.l_info_bin_path.setText(QCoreApplication.translate("AutoResolv", u"Binary Path:", None))
-        self.v_info_bin_path.setText(QCoreApplication.translate("AutoResolv", u"Bin_path", None))
-        self.l_refactor.setText(QCoreApplication.translate("AutoResolv", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:600;\">REFACTOR</span></p></body></html>", None))
-        self.b_refactor_import.setText(QCoreApplication.translate("AutoResolv", u"Import Signature File", None))
-        self.b_refactor_export.setText(QCoreApplication.translate("AutoResolv", u"Export Signature File", None))
-        self.label.setText(QCoreApplication.translate("AutoResolv", u"AutoResolv dev-v0.90p | Thibault Poncetta", None))
-        self.lib_info.setText(QCoreApplication.translate("AutoResolv", u"<html><head/><body><p><span style=\" font-size:14pt; font-weight:600;\">Librairies Management</span></p></body></html>", None))
-        self.b_libchange.setText(QCoreApplication.translate("AutoResolv", u"ChangeLibraryPath", None))
-        self.c_verbose.setText(QCoreApplication.translate("AutoResolv", u"Verbose Mode", None))
-        self.b_libpathchange.setText(QCoreApplication.translate("AutoResolv", u"AddLibraryPath", None))
+        self.setWindowTitle(QCoreApplication.translate("AutoResolv", u"AutoResolv", None))
 
+
+    def update_libs_count(self):
+        """Update Libraries Management group title with count"""
+        count = len(self.cache.libsinfo)
+        self.libs_group.setTitle(f"Libraries Management ({count})")
+
+    def update_paths_count(self):
+        """Update Library Search Paths group title with count"""
+        count = self.libpath_list.count()
+        self.libpaths_group.setTitle(f"Library Search Paths ({count})")
 
     def setupLabel(self):
         # Set window title with binary name
         binary_name = idaapi.get_root_filename()
         self.setWindowTitle(f"AutoResolv - {binary_name}")
 
+        # Set checkbox states from config
         self.c_comment.setChecked(self.cache.CONFIG['comment'])
         self.c_libc.setChecked(self.cache.CONFIG['libc'])
         self.c_demangle.setChecked(self.cache.CONFIG['demangle'])
         self.c_verbose.setChecked(self.cache.CONFIG['verbose'])
 
+        # Populate library search paths with intelligent Windows path merging
+        if len(self.cache.rpath) >= 1:
+            i = 0
+            while i < len(self.cache.rpath):
+                path = self.cache.rpath[i]
 
-        self.lineedit_lib_path.setText("Input Path of Library directory")
+                # Check if this is a single-character drive letter (Windows path split by colon)
+                if len(path) == 1 and path.isalpha():
+                    # Check if next path starts with backslash (incorrectly split Windows path)
+                    if i + 1 < len(self.cache.rpath) and self.cache.rpath[i + 1].startswith('\\'):
+                        # Merge drive letter with path: "W" + "\Final\..." -> "W:\Final\..."
+                        merged_path = path + ':' + self.cache.rpath[i + 1]
+                        normalized_path = os.path.normpath(merged_path)
+                        self.libpath_list.addItem(normalized_path)
+                        if self.cache.CONFIG.get('verbose', False):
+                            print(f"[AutoResolv] Merged split Windows path: '{path}' + '{self.cache.rpath[i + 1]}' -> '{normalized_path}'")
+                        i += 2  # Skip both the drive letter and the path part
+                        continue
+                    else:
+                        # Single letter without following path - skip it
+                        if self.cache.CONFIG.get('verbose', False):
+                            print(f"[AutoResolv] Skipping orphaned drive letter: '{path}'")
+                        i += 1
+                        continue
 
-        if len(self.cache.rpath) >=1:
-            for path in self.cache.rpath:
-                self.libpath_list.addItem(path)
-        self.libpath_list.addItem("/usr/lib/")
-        self.libpath_list.addItem("/lib/x86_64-linux-gnu/")
+                # Skip other invalid short paths
+                if len(path) <= 2 and ':' not in path:
+                    if self.cache.CONFIG.get('verbose', False):
+                        print(f"[AutoResolv] Skipping invalid path fragment: '{path}'")
+                    i += 1
+                    continue
 
+                # Normal path processing
+                normalized_path = os.path.normpath(path)
+                self.libpath_list.addItem(normalized_path)
+                i += 1
+
+        # Add default paths only on Linux
+        import platform
+        if platform.system() != 'Windows':
+            self.libpath_list.addItem("/usr/lib/")
+            self.libpath_list.addItem("/lib/x86_64-linux-gnu/")
+
+        # Populate library list
         for lib in self.cache.libsinfo:
-            self.lib_list.addItem(f"{lib} | {self.cache.libsinfo[lib]}")
+            # Normalize library path for display
+            lib_path = os.path.normpath(self.cache.libsinfo[lib])
+            self.lib_list.addItem(f"{lib} | {lib_path}")
             self.combobox_lib.addItem(lib)
 
-        # Set paths with tooltips - QFormLayout handles sizing automatically
+        # Set information paths with tooltips
         self.v_info_db_path.setText(self.cache.db_path)
         self.v_info_db_path.setToolTip(f"Full path: {self.cache.db_path}")
 
         self.v_info_bin_path.setText(self.cache.bin_path)
         self.v_info_bin_path.setToolTip(f"Full path: {self.cache.bin_path}")
 
+        # Set cache data status
         if self.cache.is_cached_data:
             self.v_info_db_value.setText("Yes")
+            self.v_info_db_value.setStyleSheet("QLabel { color: #107c10; font-style: italic; font-weight: bold; }")
         else:
-             self.v_info_db_value.setText("No")
+            self.v_info_db_value.setText("No")
+            self.v_info_db_value.setStyleSheet("QLabel { color: #d13438; font-style: italic; font-weight: bold; }")
+
+        # Update group titles with counts
+        self.update_libs_count()
+        self.update_paths_count()
 
 
     def setupAction(self):
@@ -226,6 +441,7 @@ class GUI_MAIN(QtWidgets.QDialog):
         self.b_refactor_export.clicked.connect(self.on_button_export)
         self.b_refactor_import.clicked.connect(self.on_button_import)
         self.b_libpathchange.clicked.connect(self.on_newlibpath)
+        self.libpath_list.customContextMenuRequested.connect(self.show_libpath_context_menu)
 
 
     def on_button_export(self):
@@ -286,18 +502,35 @@ class GUI_MAIN(QtWidgets.QDialog):
     
 
     def on_button_import(self):
-        if self.cache.CONFIG['verbose']:
-            print("[AutoResolv] Importing Functions signature from cache")
-        sigs = self.cache.parse_signature()
-        if sigs is None:
-            raise Exception("[AutoResolv] No signature found ! Did you use export on another IDA instance (yourcustomlib.so) ? ")
+        try:
+            print("[AutoResolv] ========== Import Signature File ==========")
 
-        if self.cache.CONFIG['verbose']:
-            print("[AutoResolv] Parsed cached sucessfull. Refactoring wrapper and XREF using signature")
-        
-        cpt, xref_cpt = refactorExtern(sigs, self.cache.CONFIG)
-        if self.cache.CONFIG['verbose']:
-            print(f"[AutoResolv] Sucessfully patched {cpt} functions and {xref_cpt} Xrefs")
+            if self.cache.CONFIG['verbose']:
+                print("[AutoResolv] Importing Functions signature from cache")
+
+            sigs = self.cache.parse_signature()
+            if sigs is None:
+                QtWidgets.QMessageBox.critical(self, "Import Error",
+                    "No signature found!\n\nDid you use 'Export Signature' on the library file first?")
+                return
+
+            if self.cache.CONFIG['verbose']:
+                print("[AutoResolv] Parsed cached successfully. Refactoring wrapper and XREF using signature")
+
+            cpt, xref_cpt = refactorExtern(sigs, self.cache.CONFIG)
+
+            if self.cache.CONFIG['verbose']:
+                print(f"[AutoResolv] Successfully patched {cpt} functions and {xref_cpt} Xrefs")
+
+            QtWidgets.QMessageBox.information(self, "Import Successful",
+                f"Successfully imported signatures!\n\nPatched {cpt} functions and {xref_cpt} cross-references.")
+            print("[AutoResolv] ========== Import Complete ==========")
+
+        except Exception as e:
+            print(f"[AutoResolv] FATAL ERROR: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            QtWidgets.QMessageBox.critical(self, "Import Error", f"Import failed:\n{str(e)}")
 
 
     def on_button_cleandb(self):
@@ -323,25 +556,33 @@ class GUI_MAIN(QtWidgets.QDialog):
 
 
     def on_newlibpath(self):
-
-    
         newpath = self.lineedit_lib_path.text()
         if not newpath.endswith(os.sep):
             newpath += os.sep
+
+        # Normalize path for consistency
+        newpath = os.path.normpath(newpath)
+        if not newpath.endswith(os.sep):
+            newpath += os.sep
+
         foundNewLibrary = False
         self.cache.parse_libinfo_cache()
         for lib in self.cache.libsinfo:
             _exist = os.path.exists(os.path.join(newpath, lib))
             if (_exist):
-
                 print(f"[AutoResolv] Librairy {lib} found !")
-                self.cache.setNewLibPath(lib, os.path.join(newpath, lib), self.cache.CONFIG)
+                lib_full_path = os.path.join(newpath, lib)
+                self.cache.setNewLibPath(lib, lib_full_path, self.cache.CONFIG)
                 items = self.lib_list.findItems(lib, QtCore.Qt.MatchContains)
                 row = self.lib_list.row(items[0])
                 self.lib_list.takeItem(row)
-                self.lib_list.addItem(f"{lib} | {os.path.join(newpath, lib)}")
+                # Normalize path for display
+                normalized_lib_path = os.path.normpath(lib_full_path)
+                self.lib_list.addItem(f"{lib} | {normalized_lib_path}")
                 if not foundNewLibrary:
-                    self.libpath_list.addItem(newpath)
+                    # Normalize path for display
+                    normalized_newpath = os.path.normpath(newpath)
+                    self.libpath_list.addItem(normalized_newpath)
                     self.cache.rpath.append(newpath)
                     self.cache.cache_save_rpath()
 
@@ -352,29 +593,114 @@ class GUI_MAIN(QtWidgets.QDialog):
 
         self.cache.parse_libinfo_cache()
         if self.cache.CONFIG['verbose']:
-                    print("[AutoResolv] Updated cache and GUI")   
-            
-                
+            print("[AutoResolv] Updated cache and GUI")
+
+        # Update counts in group titles
+        self.update_libs_count()
+        self.update_paths_count()
+
+
+    def show_libpath_context_menu(self, position):
+        """Show context menu for library search paths"""
+        # Check if an item is selected
+        item = self.libpath_list.itemAt(position)
+        if item is None:
+            return
+
+        # Create context menu
+        menu = QMenu(self)
+        remove_action = menu.addAction("Remove Path")
+
+        # Show menu and get selected action
+        action = menu.exec_(self.libpath_list.mapToGlobal(position))
+
+        # Execute action
+        if action == remove_action:
+            self.on_removelibpath()
+
+
+    def on_removelibpath(self):
+        """Remove selected library search path"""
+        current_item = self.libpath_list.currentItem()
+
+        # Check if an item is selected
+        if current_item is None:
+            QtWidgets.QMessageBox.warning(self, "No Selection",
+                "Please select a library search path to remove.")
+            return
+
+        selected_path = current_item.text()
+
+        # Confirm deletion
+        reply = QtWidgets.QMessageBox.question(self, "Confirm Removal",
+            f"Remove this library search path?\n\n{selected_path}",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No)
+
+        if reply == QtWidgets.QMessageBox.No:
+            return
+
+        # Try to remove from cache (it might not be in cache if it's a default path)
+        try:
+            # Normalize the path to match what might be in cache
+            normalized_path = os.path.normpath(selected_path)
+
+            # Try to find and remove from cache.rpath
+            removed_from_cache = False
+            for i, path in enumerate(self.cache.rpath):
+                if os.path.normpath(path) == normalized_path:
+                    self.cache.rpath.pop(i)
+                    self.cache.cache_save_rpath()
+                    removed_from_cache = True
+                    if self.cache.CONFIG['verbose']:
+                        print(f"[AutoResolv] Removed path from cache: {selected_path}")
+                    break
+
+            # Remove from list widget
+            row = self.libpath_list.row(current_item)
+            self.libpath_list.takeItem(row)
+
+            # Update count
+            self.update_paths_count()
+
+            if self.cache.CONFIG['verbose']:
+                if not removed_from_cache:
+                    print(f"[AutoResolv] Removed path from UI only (not in cache): {selected_path}")
+                else:
+                    print("[AutoResolv] Updated cache and GUI")
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Remove Error",
+                f"Failed to remove path:\n{str(e)}")
+            if self.cache.CONFIG['verbose']:
+                print(f"[AutoResolv] Error removing path: {str(e)}")
+
+
     def on_button_libchange(self):
         current_lib = self.combobox_lib.currentText().replace(" ","")
         items = self.lib_list.findItems(current_lib, QtCore.Qt.MatchContains)
         old_path = None
         for item in items:
             old_path = item.text().split("|")[1].replace(" ","")
-        
+
         new_path = self.lineedit_lib.text().replace(" ","")
         if self.cache.CONFIG['verbose']:
             print("[AutoResolv] Changing the path of {} :[{}] to [{}]".format(current_lib, old_path, new_path))
 
         self.cache.setNewLibPath(current_lib, new_path, self.cache.CONFIG)
-        self.cache.parse_libinfo_cache() 
+        self.cache.parse_libinfo_cache()
 
         items = self.lib_list.findItems(current_lib, QtCore.Qt.MatchContains)
         row = self.lib_list.row(items[0])
         self.lib_list.takeItem(row)
-        self.lib_list.addItem(f"{current_lib} | {new_path}")
+        # Normalize path for display
+        normalized_new_path = os.path.normpath(new_path)
+        self.lib_list.addItem(f"{current_lib} | {normalized_new_path}")
         if self.cache.CONFIG['verbose']:
-            print("[AutoResolv] Updated cache and GUI")   
+            print("[AutoResolv] Updated cache and GUI")
+
+        # Update library count
+        self.update_libs_count()   
 
 
 
@@ -471,10 +797,10 @@ class GUI_MAIN(QtWidgets.QDialog):
             QtWidgets.QMessageBox.critical(self, "Error", str(e))
 
     def on_parameter_modified(self):
-        self.cache.CONFIG['libc'] = bool(self.c_libc.checkState())
-        self.cache.CONFIG['demangle'] = bool(self.c_demangle.checkState())
-        self.cache.CONFIG['comment'] = bool(self.c_comment.checkState())
-        self.cache.CONFIG['verbose'] = bool(self.c_verbose.checkState())
+        self.cache.CONFIG['libc'] = self.c_libc.isChecked()
+        self.cache.CONFIG['demangle'] = self.c_demangle.isChecked()
+        self.cache.CONFIG['comment'] = self.c_comment.isChecked()
+        self.cache.CONFIG['verbose'] = self.c_verbose.isChecked()
 
         self.cache.save_conf(self.cache.CONFIG)
         if self.cache.CONFIG['verbose']:

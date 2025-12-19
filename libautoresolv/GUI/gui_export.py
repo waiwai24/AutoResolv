@@ -37,25 +37,136 @@ class GUI_EXPORT(QtWidgets.QDialog):
     def setupUi(self):
         if not self.objectName():
             self.setObjectName(u"Export")
-        self.resize(1300, 300)
-        self.listcache = QListWidget(self)
+        self.resize(900, 350)
+        self.setMinimumSize(QSize(800, 300))
+
+        # Apply IDA-style theme (clean white theme)
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #ffffff;
+            }
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #d0d0d0;
+                border-radius: 0px;
+                margin-top: 10px;
+                padding-top: 8px;
+                background-color: transparent;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 8px;
+                padding: 0 4px;
+                color: #000000;
+            }
+            QPushButton {
+                background-color: #f0f0f0;
+                color: #000000;
+                border: 1px solid #c0c0c0;
+                border-radius: 0px;
+                padding: 4px 10px;
+                min-height: 24px;
+            }
+            QPushButton:hover {
+                background-color: #e5e5e5;
+                border: 1px solid #b0b0b0;
+            }
+            QPushButton:pressed {
+                background-color: #d8d8d8;
+                border: 1px solid #a0a0a0;
+            }
+            QPushButton:disabled {
+                background-color: #f8f8f8;
+                color: #b0b0b0;
+                border: 1px solid #e0e0e0;
+            }
+            QListWidget {
+                border: 1px solid #d0d0d0;
+                border-radius: 0px;
+                background-color: white;
+                alternate-background-color: #fafafa;
+            }
+            QListWidget::item:selected {
+                background-color: #e0e0e0;
+                color: #000000;
+            }
+            QListWidget::item:hover {
+                background-color: #f0f0f0;
+            }
+            QLabel {
+                color: #000000;
+            }
+        """)
+
+        # Create main horizontal layout
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(12)
+
+        # Left side - Cache list group
+        left_group = QGroupBox("Available Cache Databases")
+        left_layout = QVBoxLayout(left_group)
+        left_layout.setContentsMargins(10, 12, 10, 10)
+
+        self.listcache = QListWidget()
         self.listcache.setObjectName(u"listcache")
-        self.listcache.setGeometry(QRect(20, 30, 256, 192))
-        self.b_export = QPushButton(self)
-        self.b_export.setObjectName(u"b_export")
-        self.b_export.setGeometry(QRect(520, 160, 161, 61))
-        self.l_info = QLabel(self)
+        self.listcache.setMinimumWidth(280)
+        left_layout.addWidget(self.listcache)
+
+        main_layout.addWidget(left_group)
+
+        # Right side - Information and action group
+        right_group = QGroupBox("Export Information")
+        right_layout = QVBoxLayout(right_group)
+        right_layout.setContentsMargins(10, 12, 10, 10)
+        right_layout.setSpacing(8)
+
+        # Info labels
+        self.l_info = QLabel()
         self.l_info.setObjectName(u"l_info")
-        self.l_info.setGeometry(QRect(300, 30, 571, 21))
-        self.l_info2 = QLabel(self)
+        self.l_info.setWordWrap(True)
+        right_layout.addWidget(self.l_info)
+
+        self.l_info2 = QLabel()
         self.l_info2.setObjectName(u"l_info2")
-        self.l_info2.setGeometry(QRect(300, 50, 591, 31))
-        self.l_cache_i = QLabel(self)
+        self.l_info2.setWordWrap(True)
+        self.l_info2.setStyleSheet("QLabel { color: #666; font-size: 10pt; }")
+        right_layout.addWidget(self.l_info2)
+
+        # Spacer
+        right_layout.addSpacing(10)
+
+        # Action section
+        action_layout = QVBoxLayout()
+        action_layout.setSpacing(6)
+
+        self.l_cache_i = QLabel()
         self.l_cache_i.setObjectName(u"l_cache_i")
-        self.l_cache_i.setGeometry(QRect(300, 110, 161, 31))
-        self.v_cache_i = QLabel(self)
+        action_layout.addWidget(self.l_cache_i)
+
+        self.v_cache_i = QLabel()
         self.v_cache_i.setObjectName(u"v_cache_i")
-        self.v_cache_i.setGeometry(QRect(370, 110, 1200, 31))
+        self.v_cache_i.setWordWrap(True)
+        self.v_cache_i.setStyleSheet("QLabel { color: #2a7bde; font-style: italic; }")
+        self.v_cache_i.setMinimumHeight(40)
+        action_layout.addWidget(self.v_cache_i)
+
+        right_layout.addLayout(action_layout)
+
+        # Spacer to push button to bottom
+        right_layout.addStretch()
+
+        # Export button
+        self.b_export = QPushButton()
+        self.b_export.setObjectName(u"b_export")
+        self.b_export.setMinimumHeight(28)
+        right_layout.addWidget(self.b_export)
+
+        main_layout.addWidget(right_group)
+
+        # Set stretch factors (left:right = 1:2)
+        main_layout.setStretch(0, 1)
+        main_layout.setStretch(1, 2)
 
         self.retranslateUi()
 
@@ -64,11 +175,11 @@ class GUI_EXPORT(QtWidgets.QDialog):
 
     def retranslateUi(self):
         self.setWindowTitle(QCoreApplication.translate("Export", u"Export", None))
-        self.b_export.setText(QCoreApplication.translate("Export", u"Export to cache", None))
-        self.l_info.setText(QCoreApplication.translate("Export", u"Please select the db cache of the main binary. ", None))
-        self.l_info2.setText(QCoreApplication.translate("Export", u"Note that AutoResolv will use the main binary cache to export only resolved Functions", None))
-        self.l_cache_i.setText(QCoreApplication.translate("Export", u"<html><head/><body><p><span style=\" font-weight:600;\">Action : </span></p></body></html>", None))
-        self.v_cache_i.setText(QCoreApplication.translate("Export", u"cache_value", None))
+        self.b_export.setText(QCoreApplication.translate("Export", u"Export to Cache", None))
+        self.l_info.setText(QCoreApplication.translate("Export", u"Please select the database cache of the main binary.", None))
+        self.l_info2.setText(QCoreApplication.translate("Export", u"Note: AutoResolv will use the main binary cache to export only resolved functions.", None))
+        self.l_cache_i.setText(QCoreApplication.translate("Export", u"Action:", None))
+        self.v_cache_i.setText(QCoreApplication.translate("Export", u"", None))
 
     def setup_label(self):
         self.v_cache_i.setText("")
