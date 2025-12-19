@@ -123,16 +123,88 @@ class GUI_MAIN(QtWidgets.QDialog):
             }
         """)
 
-        # Main layout
-        main_layout = QHBoxLayout(self)
+        # Main layout - vertical to stack top and bottom sections
+        main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(12)
 
-        # ========== LEFT PANEL ==========
-        left_panel = QWidget()
-        left_layout = QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(8)
+        # ========== TOP SECTION (Libraries Management & Library Search Paths) ==========
+        top_section = QWidget()
+        top_layout = QHBoxLayout(top_section)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(12)
+
+        # Libraries Management Group (Left)
+        self.libs_group = QGroupBox("Libraries Management")
+        libs_layout = QVBoxLayout(self.libs_group)
+        libs_layout.setContentsMargins(10, 15, 10, 10)
+        libs_layout.setSpacing(6)
+
+        self.lib_list = QListWidget()
+        self.lib_list.setObjectName(u"lib_list")
+        self.lib_list.setMinimumHeight(200)
+        libs_layout.addWidget(self.lib_list)
+
+        libs_layout.addWidget(QLabel("Select library to modify:"))
+
+        self.combobox_lib = QComboBox()
+        self.combobox_lib.setObjectName(u"combobox_lib")
+        self.combobox_lib.setMinimumHeight(26)
+        libs_layout.addWidget(self.combobox_lib)
+
+        libs_layout.addWidget(QLabel("New library path:"))
+
+        self.lineedit_lib = QLineEdit()
+        self.lineedit_lib.setObjectName(u"lineedit_lib")
+        self.lineedit_lib.setMinimumHeight(26)
+        self.lineedit_lib.setPlaceholderText("Enter new library path...")
+        libs_layout.addWidget(self.lineedit_lib)
+
+        self.b_libchange = QPushButton("Change Library Path")
+        self.b_libchange.setObjectName(u"b_libchange")
+        self.b_libchange.setMinimumHeight(28)
+        libs_layout.addWidget(self.b_libchange)
+
+        top_layout.addWidget(self.libs_group)
+
+        # Library Search Paths Group (Right)
+        self.libpaths_group = QGroupBox("Library Search Paths")
+        libpaths_layout = QVBoxLayout(self.libpaths_group)
+        libpaths_layout.setContentsMargins(10, 15, 10, 10)
+        libpaths_layout.setSpacing(6)
+
+        self.libpath_list = QListWidget()
+        self.libpath_list.setObjectName(u"libpath_list")
+        self.libpath_list.setMinimumHeight(200)
+        self.libpath_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        libpaths_layout.addWidget(self.libpath_list)
+
+        libpaths_layout.addWidget(QLabel("Add new library search path:"))
+
+        self.lineedit_lib_path = QLineEdit()
+        self.lineedit_lib_path.setObjectName(u"lineedit_lib_path")
+        self.lineedit_lib_path.setMinimumHeight(26)
+        self.lineedit_lib_path.setPlaceholderText("Enter library directory path...")
+        libpaths_layout.addWidget(self.lineedit_lib_path)
+
+        self.b_libpathchange = QPushButton("Add Library Path")
+        self.b_libpathchange.setObjectName(u"b_libpathchange")
+        self.b_libpathchange.setMinimumHeight(28)
+        libpaths_layout.addWidget(self.b_libpathchange)
+
+        top_layout.addWidget(self.libpaths_group)
+
+        # Set equal stretch for top section
+        top_layout.setStretch(0, 1)
+        top_layout.setStretch(1, 1)
+
+        main_layout.addWidget(top_section)
+
+        # ========== BOTTOM SECTION (All other controls) ==========
+        bottom_section = QWidget()
+        bottom_layout = QHBoxLayout(bottom_section)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setSpacing(12)
 
         # Parameters Group
         params_group = QGroupBox("Active Parameters")
@@ -160,29 +232,7 @@ class GUI_MAIN(QtWidgets.QDialog):
         self.c_verbose.setTristate(False)
         params_layout.addWidget(self.c_verbose)
 
-        left_layout.addWidget(params_group)
-
-        # Actions Group
-        actions_group = QGroupBox("Actions")
-        actions_layout = QVBoxLayout(actions_group)
-        actions_layout.setContentsMargins(10, 15, 10, 10)
-        actions_layout.setSpacing(6)
-
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(6)
-
-        self.b_resolve = QPushButton("Resolve")
-        self.b_resolve.setObjectName(u"b_resolve")
-        self.b_resolve.setMinimumHeight(28)
-        buttons_layout.addWidget(self.b_resolve)
-
-        self.b_cleandb = QPushButton("Clean DB Cache")
-        self.b_cleandb.setObjectName(u"b_cleandb")
-        self.b_cleandb.setMinimumHeight(28)
-        buttons_layout.addWidget(self.b_cleandb)
-
-        actions_layout.addLayout(buttons_layout)
-        left_layout.addWidget(actions_group)
+        bottom_layout.addWidget(params_group)
 
         # Information Group
         self.info_groupbox = QGroupBox("Information")
@@ -223,111 +273,56 @@ class GUI_MAIN(QtWidgets.QDialog):
         self.info_layout.addRow(self.l_info_db_value, self.v_info_db_value)
         self.info_layout.addRow(self.l_info_bin_path, self.v_info_bin_path)
 
-        left_layout.addWidget(self.info_groupbox)
+        bottom_layout.addWidget(self.info_groupbox)
 
-        # Refactor Group
-        refactor_group = QGroupBox("Signature Management")
-        refactor_layout = QVBoxLayout(refactor_group)
-        refactor_layout.setContentsMargins(10, 15, 10, 10)
-        refactor_layout.setSpacing(6)
+        # Actions & Operations Group (All buttons)
+        actions_group = QGroupBox("Actions & Operations")
+        actions_layout = QVBoxLayout(actions_group)
+        actions_layout.setContentsMargins(10, 15, 10, 10)
+        actions_layout.setSpacing(6)
 
-        refactor_buttons_layout = QHBoxLayout()
-        refactor_buttons_layout.setSpacing(6)
+        # First row: Resolve and Clean DB Cache
+        row1_layout = QHBoxLayout()
+        row1_layout.setSpacing(6)
+
+        self.b_resolve = QPushButton("Resolve")
+        self.b_resolve.setObjectName(u"b_resolve")
+        self.b_resolve.setMinimumHeight(28)
+        row1_layout.addWidget(self.b_resolve)
+
+        self.b_cleandb = QPushButton("Clean DB Cache")
+        self.b_cleandb.setObjectName(u"b_cleandb")
+        self.b_cleandb.setMinimumHeight(28)
+        row1_layout.addWidget(self.b_cleandb)
+
+        actions_layout.addLayout(row1_layout)
+
+        # Second row: Import and Export Signature
+        row2_layout = QHBoxLayout()
+        row2_layout.setSpacing(6)
 
         self.b_refactor_import = QPushButton("Import Signature")
         self.b_refactor_import.setObjectName(u"b_refactor_import")
         self.b_refactor_import.setMinimumHeight(28)
-        refactor_buttons_layout.addWidget(self.b_refactor_import)
+        row2_layout.addWidget(self.b_refactor_import)
 
         self.b_refactor_export = QPushButton("Export Signature")
         self.b_refactor_export.setObjectName(u"b_refactor_export")
         self.b_refactor_export.setMinimumHeight(28)
-        refactor_buttons_layout.addWidget(self.b_refactor_export)
+        row2_layout.addWidget(self.b_refactor_export)
 
-        refactor_layout.addLayout(refactor_buttons_layout)
-        left_layout.addWidget(refactor_group)
+        actions_layout.addLayout(row2_layout)
 
-        # Version label at bottom (no stretch to keep balanced with right panel)
-        left_layout.addSpacing(12)
+        bottom_layout.addWidget(actions_group)
+
+        main_layout.addWidget(bottom_section)
+
+        # Version label at very bottom
         self.label = QLabel("AutoResolv dev-v0.90p | Thibault Poncetta")
         self.label.setObjectName(u"label")
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setStyleSheet("QLabel { color: #666; font-size: 9pt; }")
-        left_layout.addWidget(self.label)
-
-        main_layout.addWidget(left_panel)
-
-        # ========== RIGHT PANEL ==========
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setSpacing(8)
-
-        # Libraries List Group
-        self.libs_group = QGroupBox("Libraries Management")
-        libs_layout = QVBoxLayout(self.libs_group)
-        libs_layout.setContentsMargins(10, 15, 10, 10)
-        libs_layout.setSpacing(6)
-
-        self.lib_list = QListWidget()
-        self.lib_list.setObjectName(u"lib_list")
-        self.lib_list.setMinimumHeight(200)
-        libs_layout.addWidget(self.lib_list)
-
-        libs_layout.addWidget(QLabel("Select library to modify:"))
-
-        self.combobox_lib = QComboBox()
-        self.combobox_lib.setObjectName(u"combobox_lib")
-        self.combobox_lib.setMinimumHeight(26)
-        libs_layout.addWidget(self.combobox_lib)
-
-        libs_layout.addWidget(QLabel("New library path:"))
-
-        self.lineedit_lib = QLineEdit()
-        self.lineedit_lib.setObjectName(u"lineedit_lib")
-        self.lineedit_lib.setMinimumHeight(26)
-        self.lineedit_lib.setPlaceholderText("Enter new library path...")
-        libs_layout.addWidget(self.lineedit_lib)
-
-        self.b_libchange = QPushButton("Change Library Path")
-        self.b_libchange.setObjectName(u"b_libchange")
-        self.b_libchange.setMinimumHeight(28)
-        libs_layout.addWidget(self.b_libchange)
-
-        right_layout.addWidget(self.libs_group)
-
-        # Library Search Paths Group
-        self.libpaths_group = QGroupBox("Library Search Paths")
-        libpaths_layout = QVBoxLayout(self.libpaths_group)
-        libpaths_layout.setContentsMargins(10, 15, 10, 10)
-        libpaths_layout.setSpacing(6)
-
-        self.libpath_list = QListWidget()
-        self.libpath_list.setObjectName(u"libpath_list")
-        self.libpath_list.setMinimumHeight(120)
-        self.libpath_list.setContextMenuPolicy(Qt.CustomContextMenu)
-        libpaths_layout.addWidget(self.libpath_list)
-
-        libpaths_layout.addWidget(QLabel("Add new library search path:"))
-
-        self.lineedit_lib_path = QLineEdit()
-        self.lineedit_lib_path.setObjectName(u"lineedit_lib_path")
-        self.lineedit_lib_path.setMinimumHeight(26)
-        self.lineedit_lib_path.setPlaceholderText("Enter library directory path...")
-        libpaths_layout.addWidget(self.lineedit_lib_path)
-
-        self.b_libpathchange = QPushButton("Add Library Path")
-        self.b_libpathchange.setObjectName(u"b_libpathchange")
-        self.b_libpathchange.setMinimumHeight(28)
-        libpaths_layout.addWidget(self.b_libpathchange)
-
-        right_layout.addWidget(self.libpaths_group)
-
-        main_layout.addWidget(right_panel)
-
-        # Set stretch factors (left:right = 1:1)
-        main_layout.setStretch(0, 1)
-        main_layout.setStretch(1, 1)
+        main_layout.addWidget(self.label)
 
         self.retranslateUi()
 
@@ -785,9 +780,10 @@ class GUI_MAIN(QtWidgets.QDialog):
 
             values, external_resolved= Resolve(funs_binary, self.libsfun, self.cache.libsinfo, self.cache.CONFIG)
 
-            # Restore progress dialog
-            self.progress.setRange(0, total_libs)
-            self.progress.setValue(total_libs)
+            # Close progress dialog after resolving
+            self.progress.close()
+            QCoreApplication.processEvents()  # Allow UI to refresh before showing results
+
             rs = ResultShower("Result", values, self.cache.CONFIG['demangle'])
             r = rs.show()
 
